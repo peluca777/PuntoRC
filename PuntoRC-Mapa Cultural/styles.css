@@ -1,0 +1,61 @@
+/* ============================================================
+   PuntoRC - Mapa Cultural | Hojas de Estilo Desacopladas
+   Fase 1 (v3): Modo Oscuro Dominante, Violeta Neón y Glassmorphism
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. Utilidad para ocultar barras de scroll manteniendo funcionalidad
+   ------------------------------------------------------------ */
+.scrollbar-none {
+  -ms-overflow-style: none; /* Internet Explorer y Edge legacy */
+  scrollbar-width: none;    /* Firefox */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari y Opera */
+}
+
+/* ------------------------------------------------------------
+   2. Transición y comportamiento de flechas del carrusel Hero
+   ------------------------------------------------------------ */
+.hero-nav-arrow {
+  transition: opacity 700ms ease-in-out, transform 200ms ease-out, background-color 200ms ease-out;
+}
+
+/* En desktop (md+) siempre mantienen interacción y visibilidad completa */
+@media (min-width: 768px) {
+  .hero-nav-arrow {
+    opacity: 1 !important;
+  }
+}
+
+/* ------------------------------------------------------------
+   3. Microinteracciones de tarjetas y elevación
+   ------------------------------------------------------------ */
+.card-hover-fx {
+  will-change: transform, box-shadow;
+}
+
+/* ------------------------------------------------------------
+   4. Editor de Recorte: cursores contextuales y touch
+   ------------------------------------------------------------ */
+#crop-canvas {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+#crop-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+#crop-canvas.is-resizing {
+  cursor: nwse-resize;
+}
+
+/* ------------------------------------------------------------
+   5. Drag-over visual para zona de subida de imagen
+   ------------------------------------------------------------ */
+.drop-zone-active {
+  border-color: #9333ea !important;
+  background-color: rgba(147, 51, 234, 0.05);
+}

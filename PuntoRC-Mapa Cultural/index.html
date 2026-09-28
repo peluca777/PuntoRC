@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<!--
+  PuntoRC - Mapa Cultural
+  Fase 1 (v3): Estética Jodify — Modo Oscuro Dominante, Tipografía Montserrat y Botones 3D Táctiles
+  Stack: HTML5 Semántico | TailwindCSS v3 CDN | Vanilla JS
+  Paleta: Negro abismal (zinc-950) + Violeta Neón vibrante (purple-600 / purple-500)
+  Tipografía: Montserrat (títulos, botones, UI geométrica) + Inter (cuerpo, metadatos)
+  Botones 3D: bg-purple-600 border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PuntoRC - Cartelera cultural interactiva de la ciudad de Río Cuarto con mapa geolocalizado de eventos y espectáculos." />
+  <meta name="theme-color" content="#09090b" />
+  <title>PuntoRC | Mapa Cultural de Río Cuarto</title>
+
+  <!-- Google Fonts: Montserrat (títulos, botones, geometría) + Inter (cuerpo y lectura) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Montserrat:wght@500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- TailwindCSS v3 CDN con darkMode: 'class' y fuentes extendidas -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            montserrat: ['Montserrat', 'sans-serif'],
+            inter:      ['Inter',      'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <!-- Hojas de estilo desacopladas -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Google Identity Services (GIS) OAuth 2.0 SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<!--
+  Body: Fondo negro abismal (zinc-950 en dark, zinc-50 en light).
+  pb-16 en móvil compensa la altura de la Bottom Navigation Bar (h-16).
+  overflow-x-hidden previene scroll horizontal accidental.
+-->
+<body class="font-inter bg-slate-50 text-slate-800 dark:bg-zinc-950 dark:text-zinc-100 overflow-x-hidden antialiased transition-colors duration-300 pb-16 md:pb-0">
+
+  <!-- ============================================================
+       PANTALLA DE CARGA (INITIAL LOADER)
+       Pantalla completa con logo oficial y animación de pulso/fade
+       ============================================================ -->
+  <div
+    id="app-loader"
+    class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950 transition-opacity duration-500 ease-out"
+    aria-label="Cargando PuntoRC..."
+    role="status"
+  >
+    <div class="flex flex-col items-center gap-4 animate-pulse">
+      <div class="relative flex items-center justify-center">
+        <div class="absolute w-24 h-24 rounded-full bg-purple-600/30 blur-2xl animate-ping" aria-hidden="true"></div>
+        <img
+          src="logo-isotipo.png"
+          alt="PuntoRC Logo"
+          class="relative w-20 h-auto object-contain drop-shadow-[0_0_25px_rgba(168,85,247,0.6)]"
+        />
+      </div>
+      <div class="flex flex-col items-center text-center">
+        <span class="font-inter font-extrabold text-2xl text-white tracking-tight">
+          Punto<span class="text-purple-400">RC</span>
+        </span>
+        <span class="font-inter font-medium text-xs text-slate-400 tracking-widest uppercase mt-1">
+          Mapa Cultural de Río Cuarto
+        </span>
+      </div>
+      <div class="flex items-center gap-1.5 mt-2" aria-hidden="true">
+        <span class="w-2.5 h-2.5 rounded-full bg-purple-500 animate-bounce"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-fuchsia-500 animate-bounce [animation-delay:150ms]"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-purple-400 animate-bounce [animation-delay:300ms]"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       BARRA DE NAVEGACIÓN SUPERIOR
+       Visible en desktop (md+). En móvil se simplifica (logo + switch + búsqueda rápida).
+       La navegación táctil se traslada a la Bottom Navigation Bar.
+       z-30
+       ============================================================ -->
+  <header class="fixed top-0 w-full z-50 bg-white/85 dark:bg-black/60 backdrop-blur-md border-b border-slate-200 dark:border-white/10 transition-colors duration-300">
+    <nav aria-label="Navegación principal" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+
+      <!-- LOGO OFICIAL (Responsivo y cliqueable) -->
+      <a
+        href="index.html"
+        id="navbar-brand-logo"
+        class="flex items-center gap-2 sm:gap-3 shrink-0 group focus:outline-none focus:ring-2 focus:ring-purple-500/50 rounded-xl transition-all duration-200 hover:opacity-95 cursor-pointer"
+        aria-label="PuntoRC Mapa Cultural - Volver a inicio"
+      >
+        <img
+          src="logo-isotipo.png"
+          alt="Isotipo PuntoRC"
+          class="h-8 sm:h-9 md:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_0_10px_rgba(168,85,247,0.35)]"
+        />
+        <div class="flex flex-col justify-center leading-tight">
+          <span class="font-inter font-bold text-base sm:text-lg md:text-xl text-slate-900 dark:text-white tracking-tight leading-none group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-200">
+            PuntoRC
+          </span>
+          <span class="font-inter font-medium text-[9px] sm:text-[10px] md:text-[11px] text-slate-500 dark:text-slate-400 tracking-wider uppercase mt-0.5 leading-none">
+            Mapa Cultural
+          </span>
+        </div>
+      </a>
+
+      <!-- BUSCADOR (desktop, md+) -->
+      <div class="hidden md:flex flex-1 max-w-sm">
+        <label for="search-events" class="sr-only">Buscar eventos</label>
+        <div class="relative w-full">
+          <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none" aria-hidden="true">
+            <svg class="w-4 h-4 text-slate-400 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="search"
+            id="search-events"
+            name="search-events"
+            placeholder="Buscar eventos, artistas, lugares…"
+            class="w-full pl-9 pr-4 py-2 text-sm font-inter rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-colors duration-200"
+          />
+        </div>
+      </div>
+
+      <!-- CONTROLES DESKTOP (md+): Switch tema + Ver en Mapa (3D) + Favoritos + Login + Registrarse (3D) -->
+      <div class="hidden md:flex items-center gap-3">
+
+        <!-- Switch Claro / Oscuro -->
+        <button
+          type="button"
+          id="theme-toggle"
+          aria-label="Alternar modo claro u oscuro"
+          class="p-2 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+        >
+          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M18.364 18.364l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <!-- Botón Ver en Mapa (3D de Alto Contraste - Desktop) -->
+        <button
+          type="button"
+          id="btn-open-map-desktop"
+          class="flex items-center gap-2 px-4 py-2 text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          Ver en Mapa
+        </button>
+
+        <!-- Favoritos (Abre el modal de Perfil en la pestaña Favoritos) -->
+        <button
+          type="button"
+          id="btn-favorites"
+          aria-label="Ver mis favoritos"
+          class="relative p-2 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+          <span
+            id="favorites-count"
+            class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 text-[10px] font-montserrat font-bold leading-none bg-purple-600 text-white rounded-full flex items-center justify-center shadow-md shadow-purple-950/40 dark:shadow-purple-500/30 pointer-events-none"
+            aria-hidden="true"
+          >0</span>
+        </button>
+
+        <!-- Separador -->
+        <div class="w-px h-5 bg-slate-200 dark:bg-zinc-700" aria-hidden="true"></div>
+
+        <!-- Mi Perfil (Visible al estar autenticado como acceso alternativo) -->
+        <button
+          type="button"
+          id="btn-login"
+          class="hidden px-3.5 py-2 text-sm font-montserrat font-semibold rounded-lg text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer items-center gap-2"
+        >
+          <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <span>Mi Perfil</span>
+        </button>
+
+        <!-- Registrarse / Mi Perfil (Botón 3D dinámico con Google OAuth 2.0) -->
+        <button
+          type="button"
+          id="btn-register"
+          class="px-4 py-2 text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer flex items-center gap-2"
+          aria-label="Registrarse con Google o ver mi perfil"
+        >
+          <span id="btn-register-avatar" class="hidden w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/30"></span>
+          <span id="btn-register-icon" class="flex items-center shrink-0">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12.545 10.239v3.821h5.445c-0.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866 0.549 3.921 1.453l2.814-2.814c-1.79-1.677-4.184-2.702-6.735-2.702-5.522 0-10 4.478-10 10s4.478 10 10 10c8.396 0 10.249-7.85 9.426-11.748l-9.426 0.050z"/>
+            </svg>
+          </span>
+          <span id="btn-register-text">Registrarse</span>
+        </button>
+      </div>
+
+      <!-- CONTROLES MÓVILES (solo en mobile): Switch tema + Buscador toggle -->
+      <div class="flex md:hidden items-center gap-1.5">
+        <!-- Switch tema móvil -->
+        <button
+          type="button"
+          id="theme-toggle-mobile"
+          aria-label="Alternar modo claro u oscuro"
+          class="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+        >
+          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M18.364 18.364l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <!-- Buscador móvil toggle -->
+        <button
+          type="button"
+          id="btn-search-mobile"
+          aria-label="Buscar eventos"
+          class="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Panel de búsqueda desplegable en móvil -->
+    <div
+      id="mobile-search-panel"
+      class="hidden md:hidden border-t border-white/10 bg-black/80 backdrop-blur-md px-4 py-3"
+    >
+      <label for="search-events-mobile" class="sr-only">Buscar eventos</label>
+      <div class="relative">
+        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none" aria-hidden="true">
+          <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input
+          type="search"
+          id="search-events-mobile"
+          name="search-events-mobile"
+          placeholder="Buscar eventos, artistas, lugares…"
+          class="w-full pl-9 pr-4 py-2.5 text-sm font-inter rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-colors duration-200"
+        />
+      </div>
+    </div>
+  </header>
+
+  <!-- Spacer: compensa la altura del navbar fijo (h-16) -->
+  <div class="h-16" aria-hidden="true"></div>
+
+  <!-- ============================================================
+       BANNER FLOTANTE — MODO ADMINISTRADOR ACTIVO
+       Se muestra únicamente cuando isAdminMode = true
+       ============================================================ -->
+  <aside
+    id="admin-floating-banner"
+    class="hidden bg-gradient-to-r from-purple-950 via-purple-900 to-indigo-950 border-b border-purple-500/40 text-white py-3 px-4 sm:px-6 sticky top-16 z-40 shadow-lg shadow-purple-950/30 transition-all duration-300"
+    aria-label="Panel de control de administrador"
+  >
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+      <div class="flex items-center gap-2.5">
+        <span class="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping" aria-hidden="true"></span>
+        <span class="font-montserrat font-bold text-xs sm:text-sm tracking-wide text-purple-200">
+          MODO ADMINISTRADOR ACTIVO
+        </span>
+        <span class="hidden md:inline-block text-xs font-inter text-purple-300/80">| Podés editar tarjetas, cambiar disponibilidad o agregar nuevos eventos.</span>
+      </div>
+      <div class="flex items-center gap-2.5 shrink-0">
+        <button
+          type="button"
+          id="btn-admin-create-event"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-montserrat font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white border-b-2 border-emerald-800 shadow-md active:border-b-0 active:translate-y-0.5 transition-all duration-150 cursor-pointer"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Nuevo Evento</span>
+        </button>
+        <button
+          type="button"
+          id="btn-admin-exit"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-montserrat font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-purple-200 border border-white/15 active:scale-95 transition-all duration-150 cursor-pointer"
+        >
+          <span>Salir</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+
+  <!-- ============================================================
+       CONTENIDO PRINCIPAL
+       ============================================================ -->
+  <main id="main-content">
+
+    <!-- ==========================================================
+         SECCIÓN HERO — SLIDER / CARRUSEL DE BANNERS
+         Móvil: con padding y esquinas redondeadas. Desktop (lg+): Full-Width borde a borde
+         ========================================================== -->
+    <section
+      id="hero"
+      aria-label="Eventos destacados de Río Cuarto"
+      class="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6 lg:w-full lg:max-w-none lg:px-0 lg:pt-0 overflow-hidden"
+    >
+      <div id="hero-slider" class="relative w-full h-[420px] sm:h-[500px] lg:h-[560px] rounded-3xl lg:rounded-none overflow-hidden shadow-xl shadow-purple-950/15 border border-slate-200/80 dark:border-white/10 lg:border-x-0 lg:border-t-0">
+
+        <!-- Los slides del hero se renderizan dinámicamente desde js/app.js con eventos destacados (isFeatured: true) -->
+
+        <!-- Flechas de navegación con soporte para auto-ocultamiento móvil (fade-out 2.5s) -->
+        <div id="slider-arrows" class="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3 sm:px-5 lg:px-8 pointer-events-none z-10" aria-hidden="true">
+          <button
+            type="button"
+            id="slider-prev"
+            aria-label="Slide anterior"
+            class="hero-nav-arrow pointer-events-auto w-10 h-10 rounded-full bg-black/50 hover:bg-purple-600 backdrop-blur-md text-white flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            id="slider-next"
+            aria-label="Siguiente slide"
+            class="hero-nav-arrow pointer-events-auto w-10 h-10 rounded-full bg-black/50 hover:bg-purple-600 backdrop-blur-md text-white flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Indicadores de dots (inyectados dinámicamente) -->
+        <div
+          id="slider-dots"
+          class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10"
+          role="tablist"
+          aria-label="Navegación de slides"
+        ></div>
+      </div>
+    </section>
+
+
+    <!-- ==========================================================
+         SECCIÓN CARTELERA CULTURAL
+         ========================================================== -->
+    <section
+      id="cartelera"
+      aria-label="Cartelera cultural de Río Cuarto"
+      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14"
+    >
+      <!-- Encabezado -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+          <h2 class="font-montserrat font-extrabold text-2xl sm:text-3xl text-zinc-900 dark:text-white tracking-tight">
+            Cartelera Cultural
+          </h2>
+          <p class="font-inter text-zinc-500 dark:text-zinc-400 text-sm mt-1">
+            Eventos y actividades culturales en la ciudad de Río Cuarto
+          </p>
+        </div>
+        <div>
+          <label for="sort-events" class="sr-only">Ordenar eventos</label>
+          <select
+            id="sort-events"
+            name="sort-events"
+            class="text-sm font-montserrat font-medium rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 py-2.5 px-3.5 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-colors duration-200"
+          >
+            <option value="date-asc">Más próximos</option>
+            <option value="date-desc">Más lejanos</option>
+            <option value="name-asc">A → Z</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Filtros de categoría -->
+      <div class="flex overflow-x-auto whitespace-nowrap snap-x snap-mandatory scroll-smooth gap-2.5 pb-2 mb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" role="group" aria-label="Filtrar por categoría">
+        <!-- Todos -->
+        <button
+          type="button"
+          data-filter="todos"
+          aria-pressed="true"
+          class="category-filter group snap-start shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-montserrat font-bold rounded-full bg-purple-600 hover:bg-purple-500 border border-purple-600 text-white shadow-md shadow-purple-500/25 transition-all duration-200 cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-white transition-colors duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+          <span>Todos</span>
+        </button>
+
+        <!-- Música -->
+        <button
+          type="button"
+          data-filter="musica"
+          aria-pressed="false"
+          class="category-filter group snap-start shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-montserrat font-medium rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-purple-400 dark:hover:border-purple-500/50 hover:text-purple-600 dark:hover:text-purple-300 hover:bg-purple-50/60 dark:hover:bg-purple-950/30 transition-all duration-200 cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+          </svg>
+          <span>Música</span>
+        </button>
+
+        <!-- Teatro -->
+        <button
+          type="button"
+          data-filter="teatro"
+          aria-pressed="false"
+          class="category-filter group snap-start shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-montserrat font-medium rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-purple-400 dark:hover:border-purple-500/50 hover:text-purple-600 dark:hover:text-purple-300 hover:bg-purple-50/60 dark:hover:bg-purple-950/30 transition-all duration-200 cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21c-4.97 0-9-3.582-9-8 0-2.478 1.258-4.7 3.25-6.14.73-.528 1.643-.86 2.593-.86h6.314c.95 0 1.863.332 2.593.86C19.742 8.3 21 10.522 21 13c0 4.418-4.03 8-9 8zM9 11h.01M15 11h.01M9 15c.83 1.196 1.83 1.5 3 1.5s2.17-.304 3-1.5" />
+          </svg>
+          <span>Teatro</span>
+        </button>
+
+        <!-- Feria -->
+        <button
+          type="button"
+          data-filter="feria"
+          aria-pressed="false"
+          class="category-filter group snap-start shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-montserrat font-medium rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-purple-400 dark:hover:border-purple-500/50 hover:text-purple-600 dark:hover:text-purple-300 hover:bg-purple-50/60 dark:hover:bg-purple-950/30 transition-all duration-200 cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+          <span>Feria</span>
+        </button>
+
+        <!-- Cine -->
+        <button
+          type="button"
+          data-filter="cine"
+          aria-pressed="false"
+          class="category-filter group snap-start shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-montserrat font-medium rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-purple-400 dark:hover:border-purple-500/50 hover:text-purple-600 dark:hover:text-purple-300 hover:bg-purple-50/60 dark:hover:bg-purple-950/30 transition-all duration-200 cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+          </svg>
+          <span>Cine</span>
+        </button>
+
+        <!-- Taller -->
+        <button
+          type="button"
+          data-filter="taller"
+          aria-pressed="false"
+          class="category-filter group snap-start shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-montserrat font-medium rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-purple-400 dark:hover:border-purple-500/50 hover:text-purple-600 dark:hover:text-purple-300 hover:bg-purple-50/60 dark:hover:bg-purple-950/30 transition-all duration-200 cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+          <span>Taller</span>
+        </button>
+
+        <!-- Jazz -->
+        <button
+          type="button"
+          data-filter="jazz"
+          aria-pressed="false"
+          class="category-filter group snap-start shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-montserrat font-medium rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-purple-400 dark:hover:border-purple-500/50 hover:text-purple-600 dark:hover:text-purple-300 hover:bg-purple-50/60 dark:hover:bg-purple-950/30 transition-all duration-200 cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+          </svg>
+          <span>Jazz</span>
+        </button>
+      </div>
+
+      <!-- GRILLA DE TARJETAS (Mobile: 1 col | Tablet: 2 cols | Desktop: 3 cols | XL: 4 cols) -->
+      <div
+        id="events-grid"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+        role="list"
+        aria-label="Listado de eventos culturales"
+      >
+
+        <!-- ─── CARD 1: Recital de Rock ─────────────────────── -->
+        <article data-event-id="1" class="event-card group flex flex-col rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:-translate-y-1.5 hover:shadow-xl hover:shadow-purple-900/20 hover:border-purple-500/40 transition-all duration-300 cursor-pointer" role="listitem" aria-label="Evento: Recital de Rock en Elvis">
+          <div class="relative overflow-hidden aspect-video">
+            <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&q=75" alt="Concierto de rock nocturno con luces de escenario" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <span class="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-montserrat font-bold bg-purple-600 text-white rounded-full shadow-md shadow-purple-500/30">
+              <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <span>Música</span>
+            </span>
+            <button type="button" aria-label="Agregar Recital de Rock a favoritos" aria-pressed="false" class="favorite-btn absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm text-white hover:text-purple-400 flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+            </button>
+          </div>
+          <div class="flex flex-col flex-1 p-4 gap-3">
+            <div class="flex-1">
+              <h3 class="font-montserrat font-bold text-base text-zinc-900 dark:text-white leading-snug mb-1">Recital de Rock en Elvis</h3>
+              <p class="font-inter text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">Una noche a puro rock nacional con las mejores bandas locales de la región de Río Cuarto.</p>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <time datetime="2026-09-20T22:00">Sáb 20 Sep · 22:00 hs</time>
+              </div>
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <span>Elvis Live, Río Cuarto</span>
+              </div>
+            </div>
+            <!-- Botón 3D de Alto Contraste -->
+            <button
+              type="button"
+              data-event-id="1"
+              class="btn-event-details w-full py-2.5 text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+            >
+              Ver detalles
+            </button>
+          </div>
+        </article>
+
+        <!-- ─── CARD 2: Comedia Teatro Municipal ────────────── -->
+        <article data-event-id="2" class="event-card group flex flex-col rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:-translate-y-1.5 hover:shadow-xl hover:shadow-purple-900/20 hover:border-purple-500/40 transition-all duration-300 cursor-pointer" role="listitem" aria-label="Evento: Obra de Comedia en el Teatro Municipal">
+          <div class="relative overflow-hidden aspect-video">
+            <img src="https://images.unsplash.com/photo-1503095396549-807759245b35?w=600&q=75" alt="Actores en escenario de teatro con iluminación dramática" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <span class="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-montserrat font-bold bg-purple-600 text-white rounded-full shadow-md shadow-purple-500/30">
+              <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21c-4.97 0-9-3.582-9-8 0-2.478 1.258-4.7 3.25-6.14.73-.528 1.643-.86 2.593-.86h6.314c.95 0 1.863.332 2.593.86C19.742 8.3 21 10.522 21 13c0 4.418-4.03 8-9 8zM9 11h.01M15 11h.01M9 15c.83 1.196 1.83 1.5 3 1.5s2.17-.304 3-1.5" />
+              </svg>
+              <span>Teatro</span>
+            </span>
+            <button type="button" aria-label="Agregar Obra de Comedia a favoritos" aria-pressed="false" class="favorite-btn absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm text-white hover:text-purple-400 flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+            </button>
+          </div>
+          <div class="flex flex-col flex-1 p-4 gap-3">
+            <div class="flex-1">
+              <h3 class="font-montserrat font-bold text-base text-zinc-900 dark:text-white leading-snug mb-1">Obra de Comedia en el Teatro Municipal</h3>
+              <p class="font-inter text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">Una comedia local que promete carcajadas aseguradas en el histórico Teatro Municipal.</p>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <time datetime="2026-09-21T20:30">Dom 21 Sep · 20:30 hs</time>
+              </div>
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <span>Teatro Municipal, Río Cuarto</span>
+              </div>
+            </div>
+            <!-- Botón 3D de Alto Contraste -->
+            <button
+              type="button"
+              data-event-id="2"
+              class="btn-event-details w-full py-2.5 text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+            >
+              Ver detalles
+            </button>
+          </div>
+        </article>
+
+        <!-- ─── CARD 3: Feria de Diseño ─────────────────────── -->
+        <article data-event-id="3" class="event-card group flex flex-col rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:-translate-y-1.5 hover:shadow-xl hover:shadow-purple-900/20 hover:border-purple-500/40 transition-all duration-300 cursor-pointer" role="listitem" aria-label="Evento: Feria de Diseño en el C.C. El Andino">
+          <div class="relative overflow-hidden aspect-video">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=75" alt="Stand artesanal con productos de diseño independiente" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <span class="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-montserrat font-bold bg-purple-600 text-white rounded-full shadow-md shadow-purple-500/30">
+              <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              <span>Feria</span>
+            </span>
+            <button type="button" aria-label="Agregar Feria de Diseño a favoritos" aria-pressed="false" class="favorite-btn absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm text-white hover:text-purple-400 flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+            </button>
+          </div>
+          <div class="flex flex-col flex-1 p-4 gap-3">
+            <div class="flex-1">
+              <h3 class="font-montserrat font-bold text-base text-zinc-900 dark:text-white leading-snug mb-1">Feria de Diseño — C.C. El Andino</h3>
+              <p class="font-inter text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">Diseñadores y artesanos locales exhiben moda, joyería, ilustración y objetos creativos únicos.</p>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <time datetime="2026-09-21T16:00">Dom 21 Sep · 16:00 hs</time>
+              </div>
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <span>C.C. El Andino, Río Cuarto</span>
+              </div>
+            </div>
+            <!-- Botón 3D de Alto Contraste -->
+            <button
+              type="button"
+              data-event-id="3"
+              class="btn-event-details w-full py-2.5 text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+            >
+              Ver detalles
+            </button>
+          </div>
+        </article>
+
+        <!-- ─── CARD 4: Cine al Aire Libre ───────────────────── -->
+        <article data-event-id="4" class="event-card group flex flex-col rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:-translate-y-1.5 hover:shadow-xl hover:shadow-purple-900/20 hover:border-purple-500/40 transition-all duration-300 cursor-pointer" role="listitem" aria-label="Evento: Cine al aire libre en el Parque del Centro">
+          <div class="relative overflow-hidden aspect-video">
+            <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&q=75" alt="Pantalla de proyección de cine al aire libre en un parque" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <span class="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-montserrat font-bold bg-purple-600 text-white rounded-full shadow-md shadow-purple-500/30">
+              <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+              </svg>
+              <span>Cine</span>
+            </span>
+            <button type="button" aria-label="Agregar Cine al Aire Libre a favoritos" aria-pressed="false" class="favorite-btn absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm text-white hover:text-purple-400 flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+            </button>
+          </div>
+          <div class="flex flex-col flex-1 p-4 gap-3">
+            <div class="flex-1">
+              <h3 class="font-montserrat font-bold text-base text-zinc-900 dark:text-white leading-snug mb-1">Cine al Aire Libre — Parque del Centro</h3>
+              <p class="font-inter text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">Una experiencia cinematográfica única bajo las estrellas en el corazón de Río Cuarto.</p>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <time datetime="2026-09-19T21:00">Vie 19 Sep · 21:00 hs</time>
+              </div>
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <span>Parque del Centro, Río Cuarto</span>
+              </div>
+            </div>
+            <!-- Botón 3D de Alto Contraste -->
+            <button
+              type="button"
+              data-event-id="4"
+              class="btn-event-details w-full py-2.5 text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+            >
+              Ver detalles
+            </button>
+          </div>
+        </article>
+
+        <!-- ─── CARD 5: Show de Jazz ─────────────────────────── -->
+        <article data-event-id="5" class="event-card group flex flex-col rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:-translate-y-1.5 hover:shadow-xl hover:shadow-purple-900/20 hover:border-purple-500/40 transition-all duration-300 cursor-pointer" role="listitem" aria-label="Evento: Show de Jazz">
+          <div class="relative overflow-hidden aspect-video">
+            <img src="https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=600&q=75" alt="Músico de jazz tocando la trompeta en un club" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <span class="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-montserrat font-bold bg-purple-600 text-white rounded-full shadow-md shadow-purple-500/30">
+              <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+              </svg>
+              <span>Jazz</span>
+            </span>
+            <button type="button" aria-label="Agregar Show de Jazz a favoritos" aria-pressed="false" class="favorite-btn absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm text-white hover:text-purple-400 flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+            </button>
+          </div>
+          <div class="flex flex-col flex-1 p-4 gap-3">
+            <div class="flex-1">
+              <h3 class="font-montserrat font-bold text-base text-zinc-900 dark:text-white leading-snug mb-1">Show de Jazz</h3>
+              <p class="font-inter text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">Una velada íntima y sofisticada con los mejores exponentes del jazz de la región.</p>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <time datetime="2026-09-22T21:00">Lun 22 Sep · 21:00 hs</time>
+              </div>
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <span>Elvis Live, Río Cuarto</span>
+              </div>
+            </div>
+            <!-- Botón 3D de Alto Contraste -->
+            <button
+              type="button"
+              data-event-id="5"
+              class="btn-event-details w-full py-2.5 text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+            >
+              Ver detalles
+            </button>
+          </div>
+        </article>
+
+        <!-- ─── CARD 6: Taller de Arte ────────────────────────── -->
+        <article data-event-id="6" class="event-card group flex flex-col rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:-translate-y-1.5 hover:shadow-xl hover:shadow-purple-900/20 hover:border-purple-500/40 transition-all duration-300 cursor-pointer" role="listitem" aria-label="Evento: Taller de Arte">
+          <div class="relative overflow-hidden aspect-video">
+            <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&q=75" alt="Participantes pintando en un taller de arte con pinceles y lienzos" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <span class="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-montserrat font-bold bg-purple-600 text-white rounded-full shadow-md shadow-purple-500/30">
+              <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              <span>Taller</span>
+            </span>
+            <button type="button" aria-label="Agregar Taller de Arte a favoritos" aria-pressed="false" class="favorite-btn absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm text-white hover:text-purple-400 flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+            </button>
+          </div>
+          <div class="flex flex-col flex-1 p-4 gap-3">
+            <div class="flex-1">
+              <h3 class="font-montserrat font-bold text-base text-zinc-900 dark:text-white leading-snug mb-1">Taller de Arte — Cerámica y Mixta</h3>
+              <p class="font-inter text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">Taller participativo para adultos con técnicas de cerámica, acuarela y técnica mixta. Materiales incluidos.</p>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <time datetime="2026-09-23T17:00">Mar 23 Sep · 17:00 hs</time>
+              </div>
+              <div class="flex items-center gap-2 text-xs font-inter text-zinc-500 dark:text-zinc-400">
+                <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <span>C.C. El Andino, Río Cuarto</span>
+              </div>
+            </div>
+            <!-- Botón 3D de Alto Contraste -->
+            <button
+              type="button"
+              data-event-id="6"
+              class="btn-event-details w-full py-2.5 text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+            >
+              Ver detalles
+            </button>
+          </div>
+        </article>
+
+      </div>
+      <!-- /events-grid -->
+
+      <!-- ESTADO VACÍO (oculto hasta Fase 3) -->
+      <div id="empty-state" class="hidden flex-col items-center justify-center py-20 text-center" aria-live="polite">
+        <div class="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <h3 class="font-montserrat font-bold text-lg text-zinc-700 dark:text-zinc-300 mb-2">Sin eventos para esta búsqueda</h3>
+        <p class="font-inter text-sm text-zinc-500 dark:text-zinc-500 mb-5 max-w-xs">No encontramos eventos que coincidan con tu filtro. Probá con otra categoría o fecha.</p>
+        <!-- Botón 3D de Alto Contraste -->
+        <button
+          type="button"
+          id="btn-reset-filters"
+          class="px-5 py-2.5 text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+        >
+          Ver todos los eventos
+        </button>
+      </div>
+
+    </section>
+    <!-- /cartelera -->
+
+  </main>
+
+  <!-- ============================================================
+       VISTA DE EVENTOS SPA — MODAL OVERLAY (BACKDROP-BLUR-LG)
+       Experiencia interactiva sin recarga de página (Single Page Application)
+       ============================================================ -->
+  <div
+    id="event-modal-overlay"
+    class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-lg opacity-0 pointer-events-none transition-all duration-300 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="modal-event-title"
+  >
+    <div
+      id="event-modal-card"
+      class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] rounded-3xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl shadow-zinc-950/20 dark:shadow-purple-950/50 transition-all duration-300 transform scale-95 flex flex-col my-auto"
+    >
+      <!-- Encabezado con imagen de portada del evento y badges -->
+      <div class="relative w-full aspect-video sm:h-72 overflow-hidden shrink-0 bg-zinc-100 dark:bg-zinc-900">
+        <img
+          id="modal-event-img"
+          src=""
+          alt=""
+          class="w-full h-full object-cover"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" aria-hidden="true"></div>
+
+        <!-- Botón cerrar (X) -->
+        <button
+          type="button"
+          id="modal-close-btn"
+          aria-label="Cerrar modal de detalles del evento"
+          class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/85 hover:bg-white text-zinc-700 hover:text-zinc-900 dark:bg-black/60 dark:hover:bg-zinc-800 dark:text-white backdrop-blur-md flex items-center justify-center border border-zinc-200/60 dark:border-white/10 shadow-md transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer z-10"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <!-- Badge de categoría dinámico -->
+        <div class="absolute bottom-4 left-4 sm:left-6 z-10">
+          <span
+            id="modal-event-category"
+            class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-montserrat font-bold bg-purple-600 text-white rounded-full shadow-md shadow-purple-500/40"
+          >
+          </span>
+        </div>
+      </div>
+
+      <!-- Contenido del modal -->
+      <div class="p-5 sm:p-7 flex flex-col gap-5">
+        <!-- Título -->
+        <div>
+          <h2 id="modal-event-title" class="font-montserrat font-extrabold text-2xl sm:text-3xl text-zinc-900 dark:text-white tracking-tight leading-snug">
+          </h2>
+        </div>
+
+        <!-- Grid de Metadatos (Fecha, Lugar, Precio, Disponibilidad) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-[11px] font-inter font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Fecha y hora</p>
+              <p id="modal-event-date" class="text-xs sm:text-sm font-inter font-semibold text-zinc-900 dark:text-white"></p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-[11px] font-inter font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Lugar</p>
+              <p id="modal-event-location" class="text-xs sm:text-sm font-inter font-semibold text-zinc-900 dark:text-white"></p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-[11px] font-inter font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Entrada</p>
+              <p id="modal-event-price" class="text-xs sm:text-sm font-inter font-semibold text-zinc-900 dark:text-white"></p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-[11px] font-inter font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Disponibilidad</p>
+              <p id="modal-event-status" class="text-xs sm:text-sm font-inter font-semibold text-emerald-600 dark:text-emerald-400">Confirmado · Cupos disponibles</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Descripción detallada -->
+        <div class="space-y-2">
+          <h3 class="font-montserrat font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-200 uppercase tracking-wider">Acerca del evento</h3>
+          <p id="modal-event-description" class="font-inter text-sm sm:text-base leading-relaxed text-zinc-600 dark:text-zinc-400"></p>
+        </div>
+
+        <!-- Botones de Acción (3D) -->
+        <div class="pt-2 border-t border-zinc-200 dark:border-zinc-800 flex flex-wrap gap-2">
+          <button
+            type="button"
+            id="modal-btn-action"
+            class="flex-1 min-w-[160px] py-3 px-5 font-montserrat font-extrabold text-sm rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+            </svg>
+            <span id="modal-action-text">Conseguir Entradas / Reservar</span>
+          </button>
+
+          <!-- Botón de edición para Admin Mode (se muestra si isAdminMode está activo) -->
+          <button
+            type="button"
+            id="modal-admin-edit-btn"
+            class="hidden py-3 px-5 font-montserrat font-bold text-sm rounded-xl bg-amber-500 hover:bg-amber-400 text-white border-b-4 border-amber-800 shadow-md shadow-amber-500/30 active:border-b-0 active:translate-y-1 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            <span>Editar (Admin)</span>
+          </button>
+
+          <!-- Botón Sincronización Google Calendar (Toggle Bidireccional) -->
+          <button
+            type="button"
+            id="modal-btn-calendar"
+            class="py-3 px-4 font-montserrat font-bold text-xs sm:text-sm rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-purple-500/50 active:scale-95 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shrink-0"
+            aria-label="Añadir evento a Google Calendar"
+          >
+            <span id="modal-calendar-icon-box" class="flex items-center text-purple-600 dark:text-purple-400 shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </span>
+            <span id="modal-calendar-text">Añadir a Google Calendar</span>
+          </button>
+
+          <button
+            type="button"
+            id="modal-btn-share"
+            class="py-3 px-4 sm:px-5 font-montserrat font-bold text-sm rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-800 active:scale-95 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shrink-0"
+          >
+            <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            <span id="modal-share-label">Compartir</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       MODAL DE PERFIL DE USUARIO Y FAVORITOS
+       ============================================================ -->
+  <div
+    id="profile-modal-overlay"
+    class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-lg opacity-0 pointer-events-none transition-all duration-300 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="profile-modal-title"
+  >
+    <div
+      id="profile-modal-card"
+      class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] rounded-3xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-purple-500/30 shadow-2xl shadow-purple-950/50 transition-all duration-300 transform scale-95 flex flex-col my-auto text-slate-800 dark:text-zinc-100"
+    >
+      <!-- Cabecera del Perfil -->
+      <div class="relative p-6 sm:p-8 bg-gradient-to-br from-purple-900/15 via-transparent to-purple-600/10 border-b border-slate-200 dark:border-white/10 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div id="profile-avatar-container" class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-fuchsia-500 p-0.5 shadow-lg shadow-purple-500/30 shrink-0 overflow-hidden">
+            <div id="profile-avatar-fallback" class="w-full h-full rounded-[14px] bg-slate-900 dark:bg-zinc-900 flex items-center justify-center text-white font-montserrat font-extrabold text-xl">
+              RC
+            </div>
+            <img id="profile-avatar-img" class="hidden w-full h-full rounded-[14px] object-cover" alt="Foto de perfil de Google" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 id="profile-modal-title" class="font-montserrat font-extrabold text-xl sm:text-2xl text-slate-900 dark:text-white tracking-tight">
+                Mi Perfil
+              </h2>
+              <span id="profile-user-badge" class="px-2 py-0.5 text-[10px] font-montserrat font-bold uppercase rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40">
+                Explorador
+              </span>
+            </div>
+            <p id="profile-user-subtitle" class="font-inter text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
+              Río Cuarto, Córdoba · Cartelera Cultural
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Botón Cerrar Sesión (Google) -->
+          <button
+            type="button"
+            id="profile-logout-btn"
+            class="hidden px-3 py-1.5 text-xs font-montserrat font-semibold rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 dark:bg-zinc-900 dark:hover:bg-rose-950/40 dark:text-zinc-400 dark:hover:text-rose-400 border border-slate-200 dark:border-zinc-800 transition-colors cursor-pointer items-center gap-1.5"
+            aria-label="Cerrar sesión de Google"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span class="hidden sm:inline">Cerrar Sesión</span>
+          </button>
+
+          <!-- Botón cerrar (X) -->
+          <button
+            type="button"
+            id="profile-close-btn"
+            aria-label="Cerrar modal de perfil"
+            class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-white flex items-center justify-center border border-slate-200 dark:border-white/10 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-6 sm:p-8 space-y-8">
+        <!-- SECCIÓN 1: MIS FAVORITOS -->
+        <section aria-labelledby="heading-favorites">
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </div>
+              <h3 id="heading-favorites" class="font-montserrat font-bold text-lg text-slate-900 dark:text-white">
+                Mis Favoritos
+              </h3>
+              <span id="profile-favorites-count-badge" class="px-2 py-0.5 text-xs font-montserrat font-bold rounded-full bg-purple-600 text-white shadow-sm">
+                0
+              </span>
+            </div>
+          </div>
+
+          <!-- Contenedor dinámico de favoritos -->
+          <div
+            id="profile-favorites-container"
+            class="grid grid-cols-1 sm:grid-cols-2 gap-4"
+          >
+            <!-- Inyectado dinámicamente por JS -->
+          </div>
+
+          <!-- Estado vacío si no hay favoritos -->
+          <div
+            id="profile-favorites-empty"
+            class="hidden flex-col items-center justify-center py-10 px-4 text-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40"
+          >
+            <div class="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h4 class="font-montserrat font-bold text-base text-slate-800 dark:text-zinc-200 mb-1">
+              Aún no tenés eventos guardados
+            </h4>
+            <p class="font-inter text-xs sm:text-sm text-slate-500 dark:text-zinc-400 max-w-sm mb-4">
+              Explorá la cartelera y tocá el icono de corazón en los eventos que te interesen para guardarlos aquí.
+            </p>
+            <button
+              type="button"
+              id="btn-explore-from-profile"
+              class="px-5 py-2.5 text-xs sm:text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+            >
+              Explorar Cartelera
+            </button>
+          </div>
+        </section>
+
+        <!-- SECCIÓN 2: EVENTOS AGENDADOS EN GOOGLE CALENDAR (Sincronización Bidireccional) -->
+        <section id="profile-calendar-section" aria-labelledby="heading-calendar-events" class="pt-6 border-t border-slate-200 dark:border-white/10">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 id="heading-calendar-events" class="font-montserrat font-bold text-lg text-slate-900 dark:text-white">
+                Eventos Agendados en Google Calendar
+              </h3>
+              <span id="profile-calendar-count-badge" class="px-2 py-0.5 text-xs font-montserrat font-bold rounded-full bg-purple-600 text-white shadow-sm">
+                0
+              </span>
+            </div>
+
+            <!-- Estado de sincronización / botón interactivo -->
+            <div id="profile-calendar-auth-status" class="shrink-0 flex items-center gap-2">
+              <!-- Inyectado dinámicamente por JS -->
+            </div>
+          </div>
+
+          <!-- Contenedor dinámico de eventos agendados -->
+          <div
+            id="profile-calendar-container"
+            class="grid grid-cols-1 sm:grid-cols-2 gap-4"
+          >
+            <!-- Inyectado dinámicamente por JS -->
+          </div>
+
+          <!-- Estado vacío si no hay eventos agendados -->
+          <div
+            id="profile-calendar-empty"
+            class="hidden flex-col items-center justify-center py-10 px-4 text-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40"
+          >
+            <div class="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h4 id="profile-calendar-empty-title" class="font-montserrat font-bold text-base text-slate-800 dark:text-zinc-200 mb-1">
+              Aún no tenés eventos agendados en Google Calendar
+            </h4>
+            <p id="profile-calendar-empty-desc" class="font-inter text-xs sm:text-sm text-slate-500 dark:text-zinc-400 max-w-sm mb-4">
+              Abrí cualquier evento cultural en la cartelera y tocá en "Añadir a Google Calendar" para sincronizarlo directamente con tu cuenta.
+            </p>
+            <button
+              type="button"
+              id="btn-explore-from-calendar"
+              class="px-5 py-2.5 text-xs sm:text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+            >
+              Explorar Cartelera
+            </button>
+          </div>
+        </section>
+
+        <!-- SECCIÓN 3: PANEL DE ADMINISTRADOR (CRUD) CON TOGGLE ESTILO iOS -->
+        <section
+          aria-labelledby="heading-admin-mode"
+          class="p-5 sm:p-6 rounded-2xl bg-slate-100 dark:bg-zinc-900/80 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        >
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-500" aria-hidden="true"></span>
+              <h3 id="heading-admin-mode" class="font-montserrat font-bold text-base text-slate-900 dark:text-white">
+                Modo Administrador (CRUD)
+              </h3>
+              <span
+                id="admin-status-pill"
+                class="px-2 py-0.5 text-[10px] font-montserrat font-bold uppercase rounded-md bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400"
+              >
+                Inactivo
+              </span>
+            </div>
+            <p class="font-inter text-xs text-slate-500 dark:text-zinc-400 max-w-md">
+              Habilita herramientas para editar títulos, fotos, fechas, cupos y precios de eventos directamente desde la interfaz.
+            </p>
+          </div>
+
+          <!-- Switch Toggle Estilo iOS -->
+          <div class="flex items-center gap-3 self-end sm:self-center shrink-0">
+            <button
+              type="button"
+              id="admin-mode-toggle"
+              role="switch"
+              aria-checked="false"
+              aria-labelledby="heading-admin-mode"
+              class="relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-300 dark:bg-zinc-700 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+            >
+              <span class="sr-only">Activar modo administrador</span>
+              <span
+                id="admin-toggle-thumb"
+                aria-hidden="true"
+                class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-0"
+              ></span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       MODAL DE EDICIÓN Y CREACIÓN DE EVENTOS (CRUD)
+       ============================================================ -->
+  <div
+    id="crud-edit-modal"
+    class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-lg opacity-0 pointer-events-none transition-all duration-300 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="crud-modal-title"
+  >
+    <div
+      id="crud-modal-card"
+      class="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] rounded-3xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-purple-500/30 shadow-2xl shadow-purple-950/60 transition-all duration-300 transform scale-95 flex flex-col my-auto text-slate-800 dark:text-zinc-100"
+    >
+      <!-- Encabezado del CRUD Modal -->
+      <div class="p-5 sm:p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between gap-4">
+        <div>
+          <span class="text-[11px] font-montserrat font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+            Gestión de Contenido
+          </span>
+          <h2 id="crud-modal-title" class="font-montserrat font-extrabold text-xl sm:text-2xl text-slate-900 dark:text-white tracking-tight">
+            Editar Evento
+          </h2>
+        </div>
+        <button
+          type="button"
+          id="crud-close-btn"
+          aria-label="Cerrar modal de edición"
+          class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-white flex items-center justify-center border border-slate-200 dark:border-white/10 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Formulario CRUD -->
+      <form id="crud-form" class="p-5 sm:p-6 space-y-4">
+        <input type="hidden" id="crud-event-id" name="crud-event-id" value="" />
+
+        <!-- Título -->
+        <div>
+          <label for="crud-title" class="block text-xs font-montserrat font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1.5">
+            Título del Evento <span class="text-purple-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            type="text"
+            id="crud-title"
+            name="crud-title"
+            required
+            placeholder="Ej: Concierto Acústico en el Teatrino"
+            class="w-full px-4 py-2.5 text-sm font-inter rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+          />
+        </div>
+
+        <!-- Fila: Categoría y Disponibilidad/Cupos -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="crud-category" class="block text-xs font-montserrat font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1.5">
+              Categoría <span class="text-purple-500" aria-hidden="true">*</span>
+            </label>
+            <select
+              id="crud-category"
+              name="crud-category"
+              required
+              class="w-full px-4 py-2.5 text-sm font-inter rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+            >
+              <option value="Música">Música</option>
+              <option value="Teatro">Teatro</option>
+              <option value="Feria">Feria</option>
+              <option value="Cine">Cine</option>
+              <option value="Jazz">Jazz</option>
+              <option value="Taller">Taller</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="crud-status" class="block text-xs font-montserrat font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1.5">
+              Disponibilidad / Cupos <span class="text-purple-500" aria-hidden="true">*</span>
+            </label>
+            <select
+              id="crud-status"
+              name="crud-status"
+              required
+              class="w-full px-4 py-2.5 text-sm font-inter rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+            >
+              <option value="Cupos disponibles">🟢 Cupos disponibles</option>
+              <option value="Últimas entradas">🟡 Últimas entradas</option>
+              <option value="Agotado">🔴 Agotado</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Fila: Evento Destacado en Hero Slider (Switch accesible tipo iOS) -->
+        <div class="p-3 rounded-2xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-4">
+          <div>
+            <span class="block text-xs font-montserrat font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
+              Destacado en Hero
+            </span>
+            <span id="crud-featured-status-label" class="text-xs font-montserrat font-medium text-slate-500 dark:text-zinc-400">
+              Normal (No destacado)
+            </span>
+          </div>
+          <button
+            type="button"
+            id="crud-featured-toggle"
+            role="switch"
+            aria-checked="false"
+            aria-label="Alternar evento destacado en el Hero Slider"
+            class="relative inline-flex h-6 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-300 dark:bg-zinc-700 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+          >
+            <span
+              id="crud-featured-thumb"
+              aria-hidden="true"
+              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-0"
+            ></span>
+          </button>
+        </div>
+
+        <!-- Fila: Fecha y Precio -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="crud-date" class="block text-xs font-montserrat font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1.5">
+              Fecha y Hora <span class="text-purple-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="text"
+              id="crud-date"
+              name="crud-date"
+              required
+              placeholder="Ej: Sábado 27 Sep · 21:00 hs"
+              class="w-full px-4 py-2.5 text-sm font-inter rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label for="crud-price" class="block text-xs font-montserrat font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1.5">
+              Precio / Entrada <span class="text-purple-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="text"
+              id="crud-price"
+              name="crud-price"
+              required
+              placeholder="Ej: $3.500 o Entrada Libre"
+              class="w-full px-4 py-2.5 text-sm font-inter rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+            />
+          </div>
+        </div>
+
+        <!-- Lugar / Espacio Cultural -->
+        <div>
+          <label for="crud-location" class="block text-xs font-montserrat font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1.5">
+            Lugar / Espacio Cultural <span class="text-purple-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            type="text"
+            id="crud-location"
+            name="crud-location"
+            required
+            placeholder="Ej: Teatro Municipal, Río Cuarto (Constitución 945)"
+            class="w-full px-4 py-2.5 text-sm font-inter rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+          />
+        </div>
+
+        <!-- ═══ IMAGEN DEL EVENTO (Toggle URL / Subir Archivo) ═══ -->
+        <div>
+          <span class="block text-xs font-montserrat font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-2">
+            Imagen del Evento <span class="text-purple-500" aria-hidden="true">*</span>
+          </span>
+
+          <!-- Hidden input que almacena el valor final (URL o dataURL) -->
+          <input type="hidden" id="crud-image" name="crud-image" value="" />
+
+          <!-- Toggle tabs: Pegar URL / Subir Archivo -->
+          <div id="crud-image-mode-tabs" class="flex rounded-xl overflow-hidden border border-slate-300 dark:border-zinc-700 mb-3" role="tablist" aria-label="Modo de carga de imagen">
+            <button
+              type="button"
+              role="tab"
+              id="tab-image-url"
+              aria-selected="true"
+              aria-controls="panel-image-url"
+              class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold uppercase tracking-wider transition-colors bg-purple-600 text-white cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              Pegar URL
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-image-file"
+              aria-selected="false"
+              aria-controls="panel-image-file"
+              class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold uppercase tracking-wider transition-colors bg-slate-50 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              Subir Archivo
+            </button>
+          </div>
+
+          <!-- Panel: Pegar URL (visible por defecto) -->
+          <div id="panel-image-url" role="tabpanel" aria-labelledby="tab-image-url">
+            <input
+              type="url"
+              id="crud-image-url-input"
+              placeholder="https://images.unsplash.com/..."
+              class="w-full px-4 py-2.5 text-sm font-inter rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+            />
+          </div>
+
+          <!-- Panel: Subir Archivo (oculto por defecto) -->
+          <div id="panel-image-file" role="tabpanel" aria-labelledby="tab-image-file" class="hidden">
+            <label
+              id="crud-image-drop-zone"
+              for="crud-image-file-input"
+              class="flex flex-col items-center justify-center gap-2 px-4 py-6 rounded-xl border-2 border-dashed border-slate-300 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 cursor-pointer hover:border-purple-500 dark:hover:border-purple-500 transition-colors"
+            >
+              <svg class="w-8 h-8 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <span class="text-xs font-inter text-slate-500 dark:text-zinc-400">Arrastrá o hacé clic para subir</span>
+              <span class="text-[10px] font-inter text-slate-400 dark:text-zinc-500">JPG, PNG, WebP · Máx. 10 MB</span>
+              <input type="file" id="crud-image-file-input" accept="image/*" class="hidden" />
+            </label>
+          </div>
+
+          <!-- Preview + Botón Recortar -->
+          <div id="crud-image-preview-wrapper" class="hidden mt-3">
+            <div class="relative rounded-xl overflow-hidden aspect-video bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
+              <img id="crud-image-preview" alt="Vista previa de imagen del evento" class="w-full h-full object-cover" />
+              <div id="crud-image-loading" class="absolute inset-0 bg-black/50 flex items-center justify-center hidden">
+                <div class="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="crud-crop-btn"
+              disabled
+              class="mt-2 w-full flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Recortar Imagen (16:9)
+            </button>
+          </div>
+        </div>
+
+        <!-- Descripción -->
+        <div>
+          <label for="crud-description" class="block text-xs font-montserrat font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1.5">
+            Descripción Detallada <span class="text-purple-500" aria-hidden="true">*</span>
+          </label>
+          <textarea
+            id="crud-description"
+            name="crud-description"
+            rows="3"
+            required
+            placeholder="Contanos de qué trata el evento, artistas que participan, recomendaciones…"
+            class="w-full px-4 py-2.5 text-sm font-inter rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
+          ></textarea>
+        </div>
+
+        <!-- Botones de Acción del CRUD -->
+        <div class="pt-4 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <button
+            type="button"
+            id="crud-delete-btn"
+            class="hidden w-full sm:w-auto px-4 py-2.5 text-xs font-montserrat font-bold rounded-xl bg-rose-600 hover:bg-rose-500 text-white border-b-4 border-rose-900 shadow-md active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+          >
+            Eliminar Evento
+          </button>
+
+          <div class="flex items-center gap-3 w-full sm:w-auto ml-auto justify-end">
+            <button
+              type="button"
+              id="crud-cancel-btn"
+              class="w-full sm:w-auto px-4 py-2.5 text-xs font-montserrat font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              id="crud-submit-btn"
+              class="w-full sm:w-auto px-6 py-2.5 text-xs font-montserrat font-extrabold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+            >
+              Guardar Cambios
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       MODAL EDITOR DE RECORTE (Canvas 16:9)
+       z-[60] para superponerse al CRUD Modal (z-50)
+       ============================================================ -->
+  <div
+    id="crop-editor-modal"
+    class="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-300"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="crop-editor-title"
+  >
+    <div class="relative w-full max-w-xl max-h-[92vh] flex flex-col rounded-3xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-purple-500/30 shadow-2xl shadow-purple-950/60 overflow-hidden">
+      <!-- Encabezado del Crop Modal -->
+      <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-white/10 flex items-center justify-between gap-3 shrink-0">
+        <div>
+          <span class="text-[10px] font-montserrat font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+            Edición de Imagen
+          </span>
+          <h3 id="crop-editor-title" class="font-montserrat font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">
+            Editor de Recorte
+          </h3>
+        </div>
+        <button
+          type="button"
+          id="crop-close-btn"
+          aria-label="Cerrar editor de recorte"
+          class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-white flex items-center justify-center border border-slate-200 dark:border-white/10 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Área del Canvas -->
+      <div class="p-4 flex-1 overflow-y-auto flex flex-col items-center justify-center">
+        <div id="crop-canvas-wrapper" class="relative rounded-xl overflow-hidden bg-zinc-900 select-none flex items-center justify-center max-w-full">
+          <canvas id="crop-canvas" class="block"></canvas>
+        </div>
+        <p class="mt-2 text-[10px] font-inter text-slate-400 dark:text-zinc-500 text-center">
+          Arrastrá para mover · Usá las esquinas para redimensionar · Proporción 16:9 fija
+        </p>
+      </div>
+
+      <!-- Botones de Acción del Crop -->
+      <div class="px-4 pb-4 sm:px-5 sm:pb-5 flex justify-end gap-3 shrink-0">
+        <button
+          type="button"
+          id="crop-cancel-btn"
+          class="px-4 py-2.5 text-xs font-montserrat font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          id="crop-apply-btn"
+          class="px-6 py-2.5 text-xs font-montserrat font-extrabold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+        >
+          Aplicar Recorte
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       TOAST NOTIFICATION (FEEDBACK VISUAL FLOTANTE)
+       ============================================================ -->
+  <div
+    id="toast-notification"
+    role="status"
+    aria-live="polite"
+    class="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-zinc-900 text-white border border-purple-500/40 shadow-xl shadow-purple-950/40 opacity-0 translate-y-6 pointer-events-none transition-all duration-300 max-w-sm"
+  >
+    <div id="toast-icon-box" class="w-7 h-7 rounded-lg bg-purple-600/30 text-purple-400 flex items-center justify-center shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+    <p id="toast-message" class="font-inter text-xs sm:text-sm text-zinc-100 font-medium"></p>
+  </div>
+
+
+  <!-- ============================================================
+       PIE DE PÁGINA (FOOTER)
+       ============================================================ -->
+  <footer class="bg-slate-900 dark:bg-black border-t border-slate-800 dark:border-zinc-800 text-slate-400 dark:text-zinc-400 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+
+        <!-- Columna 1: Marca -->
+        <div class="space-y-4">
+          <a href="index.html" class="inline-flex items-center gap-2.5 group" aria-label="PuntoRC - Inicio">
+            <img
+              src="logo-isotipo.png"
+              alt="Isotipo PuntoRC"
+              class="h-8 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_0_8px_rgba(168,85,247,0.35)]"
+            />
+            <div class="flex flex-col justify-center leading-tight">
+              <span class="font-inter font-bold text-lg text-white tracking-tight leading-none group-hover:text-purple-200 transition-colors duration-200">
+                PuntoRC
+              </span>
+              <span class="font-inter font-medium text-[10px] text-slate-400 tracking-wider uppercase mt-0.5 leading-none">
+                Mapa Cultural
+              </span>
+            </div>
+          </a>
+          <p class="font-inter text-sm leading-relaxed text-zinc-400 max-w-xs">
+            La cartelera cultural interactiva de la ciudad de Río Cuarto. Encontrá eventos y actividades con mapa en tiempo real.
+          </p>
+          <!-- Redes Sociales -->
+          <div class="flex gap-3" aria-label="Redes sociales de PuntoRC">
+            <a href="#" aria-label="Seguir a PuntoRC en Instagram" class="w-9 h-9 rounded-lg bg-zinc-800 hover:bg-purple-600 text-zinc-400 hover:text-white flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>
+            <a href="#" aria-label="Seguir a PuntoRC en Facebook" class="w-9 h-9 rounded-lg bg-zinc-800 hover:bg-purple-600 text-zinc-400 hover:text-white flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="#" aria-label="Seguir a PuntoRC en X" class="w-9 h-9 rounded-lg bg-zinc-800 hover:bg-purple-600 text-zinc-400 hover:text-white flex items-center justify-center transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Columna 2: Navegación Rápida -->
+        <nav aria-label="Navegación del pie de página">
+          <h3 class="font-montserrat font-bold text-sm text-white uppercase tracking-wider mb-4">Explorar</h3>
+          <ul class="space-y-3">
+            <li><a href="#cartelera" class="font-inter text-sm hover:text-purple-400 transition-colors duration-200 focus:outline-none focus:underline">Cartelera de Eventos</a></li>
+            <li><a href="#" class="font-inter text-sm hover:text-purple-400 transition-colors duration-200 focus:outline-none focus:underline">Mapa Interactivo</a></li>
+            <li><a href="#" class="font-inter text-sm hover:text-purple-400 transition-colors duration-200 focus:outline-none focus:underline">Espacios Culturales</a></li>
+            <li><a href="#suggest-form" class="font-inter text-sm hover:text-purple-400 transition-colors duration-200 focus:outline-none focus:underline">Sugerir un Evento</a></li>
+          </ul>
+        </nav>
+
+        <!-- Columna 3: Formulario Sugerir un Evento -->
+        <div id="suggest-form">
+          <h3 class="font-montserrat font-bold text-sm text-white uppercase tracking-wider mb-4">Sugerir un Evento</h3>
+          <form id="suggestion-form" novalidate aria-label="Formulario para sugerir un evento cultural" class="space-y-3">
+            <div>
+              <label for="suggest-name" class="block text-xs font-inter font-medium text-zinc-400 mb-1">Nombre completo <span class="text-purple-400" aria-hidden="true">*</span></label>
+              <input type="text" id="suggest-name" name="suggest-name" required autocomplete="name" placeholder="Tu nombre" class="w-full px-3.5 py-2.5 text-sm font-inter rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-colors duration-200" />
+            </div>
+            <div>
+              <label for="suggest-email" class="block text-xs font-inter font-medium text-zinc-400 mb-1">Correo electrónico <span class="text-purple-400" aria-hidden="true">*</span></label>
+              <input type="email" id="suggest-email" name="suggest-email" required autocomplete="email" placeholder="tu@correo.com" class="w-full px-3.5 py-2.5 text-sm font-inter rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-colors duration-200" />
+            </div>
+            <div>
+              <label for="suggest-category" class="block text-xs font-inter font-medium text-zinc-400 mb-1">Categoría del evento <span class="text-purple-400" aria-hidden="true">*</span></label>
+              <select id="suggest-category" name="suggest-category" required class="w-full px-3.5 py-2.5 text-sm font-inter rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-colors duration-200">
+                <option value="" disabled selected>Seleccioná una categoría</option>
+                <option value="musica">Música</option>
+                <option value="teatro">Teatro</option>
+                <option value="feria">Feria</option>
+                <option value="cine">Cine</option>
+                <option value="taller">Taller</option>
+                <option value="jazz">Jazz</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div>
+              <label for="suggest-message" class="block text-xs font-inter font-medium text-zinc-400 mb-1">Descripción del evento <span class="text-purple-400" aria-hidden="true">*</span></label>
+              <textarea id="suggest-message" name="suggest-message" required rows="3" placeholder="Contanos sobre el evento: nombre, fecha, lugar…" class="w-full px-3.5 py-2.5 text-sm font-inter rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-colors duration-200 resize-none"></textarea>
+            </div>
+            <!-- Botón 3D de Alto Contraste (Submit) -->
+            <button
+              type="submit"
+              class="w-full py-3 text-sm font-montserrat font-bold rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 transition-all duration-150 cursor-pointer"
+            >
+              Enviar sugerencia
+            </button>
+            <div id="suggestion-feedback" class="hidden text-center text-sm font-inter py-2 rounded-xl" role="alert" aria-live="assertive"></div>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Créditos -->
+      <div class="border-t border-zinc-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-inter">
+        <p class="text-zinc-500">© 2026 PuntoRC — Mapa Cultural de Río Cuarto. Hecho con 💜 en Río Cuarto, Córdoba.</p>
+        <div class="flex gap-4">
+          <a href="#" class="text-zinc-500 hover:text-purple-400 transition-colors duration-200 focus:outline-none focus:underline">Privacidad</a>
+          <a href="#" class="text-zinc-500 hover:text-purple-400 transition-colors duration-200 focus:outline-none focus:underline">Términos</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       BOTÓN FLOTANTE — VOLVER ARRIBA
+       bottom-20 en móvil (sobre el Bottom Nav de h-16)
+       bottom-6 en md+. Inicia oculto; JS lo muestra al scrollY > 300
+       ============================================================ -->
+  <button
+    id="scroll-to-top"
+    type="button"
+    aria-label="Volver al inicio de la página"
+    class="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 w-12 h-12 rounded-full bg-purple-600 hover:bg-purple-500 text-white border-b-4 border-purple-900 shadow-lg shadow-purple-500/40 active:border-b-0 active:translate-y-1 flex items-center justify-center opacity-0 translate-y-10 pointer-events-none transition-all duration-300"
+  >
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7" />
+    </svg>
+  </button>
+
+
+  <!-- ============================================================
+       BOTTOM NAVIGATION BAR — MÓVIL ÚNICAMENTE (md:hidden)
+       z-40: Fija abajo, estilo app nativa
+       4 destinos: Inicio | Explorar | Mapa (Pill 3D destacado) | Perfil
+       ============================================================ -->
+  <nav
+    id="bottom-nav"
+    aria-label="Navegación principal móvil"
+    class="md:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-white/95 dark:bg-black/95 backdrop-blur-md border-t border-slate-200 dark:border-zinc-800 flex items-stretch transition-colors duration-300"
+  >
+
+    <!-- Tab: Inicio -->
+    <button
+      type="button"
+      id="bottom-nav-home"
+      aria-label="Inicio"
+      aria-current="page"
+      class="bottom-nav-tab flex-1 flex flex-col items-center justify-center gap-1 text-purple-600 dark:text-purple-400 rounded-xl m-1 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:-translate-y-1 transition-all duration-300 focus:outline-none cursor-pointer"
+    >
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+      </svg>
+      <span class="text-[10px] font-montserrat font-semibold leading-none">Inicio</span>
+    </button>
+
+    <!-- Tab: Explorar -->
+    <button
+      type="button"
+      id="bottom-nav-explore"
+      aria-label="Explorar eventos"
+      class="bottom-nav-tab flex-1 flex flex-col items-center justify-center gap-1 text-slate-500 dark:text-zinc-500 rounded-xl m-1 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-400 hover:-translate-y-1 transition-all duration-300 focus:outline-none cursor-pointer"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <span class="text-[10px] font-montserrat font-semibold leading-none">Explorar</span>
+    </button>
+
+    <!-- Tab: Mapa (Botón flotante interactivo con feedback táctil y animación) -->
+    <button
+      type="button"
+      id="bottom-nav-map"
+      aria-label="Abrir mapa interactivo de eventos"
+      class="bottom-nav-tab flex-1 flex flex-col items-center justify-center gap-1 group focus:outline-none cursor-pointer"
+    >
+      <div class="w-11 h-11 -mt-5 rounded-full bg-gradient-to-tr from-purple-700 via-purple-600 to-fuchsia-500 border-2 border-purple-400/40 shadow-lg shadow-purple-950/80 flex items-center justify-center transform transition-all duration-200 group-hover:-translate-y-1 group-hover:scale-105 group-hover:shadow-purple-500/50 group-focus:-translate-y-1 group-focus:scale-105 active:translate-y-0.5 active:scale-95 active:shadow-md">
+        <svg class="w-5 h-5 text-white transition-transform duration-200 group-hover:rotate-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg>
+      </div>
+      <span class="text-[10px] font-montserrat font-semibold leading-none text-slate-500 dark:text-zinc-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-200">Mapa</span>
+    </button>
+
+    <!-- Tab: Perfil -->
+    <button
+      type="button"
+      id="bottom-nav-profile"
+      aria-label="Mi perfil y cuenta"
+      class="bottom-nav-tab flex-1 flex flex-col items-center justify-center gap-1 text-slate-500 dark:text-zinc-500 rounded-xl m-1 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-400 hover:-translate-y-1 transition-all duration-300 focus:outline-none cursor-pointer"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+      <span class="text-[10px] font-montserrat font-semibold leading-none">Perfil</span>
+    </button>
+
+  </nav>
+
+
+    <!-- ============================================================
+       MÓDULOS JAVASCRIPT DESACOPLADOS (Patrón Repository & SRP)
+       ============================================================ -->
+  <script src="js/data.js"></script>
+  <script src="js/repository.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/image-editor.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
