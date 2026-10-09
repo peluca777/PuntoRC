@@ -1,7 +1,7 @@
 /**
  * PuntoRC - Mapa Cultural
  * Dominio de Administración: Editor de Imagen (Subida Local + Recorte Canvas)
- * ADR-009/ADR-011: Canvas nativo, compresión obligatoria max 1920x1080px / JPEG 0.8
+ * ADR-009: Canvas nativo, compresión obligatoria max 1000px / JPEG 0.8
  */
 (function(window) {
   'use strict';
@@ -13,7 +13,7 @@
      ──────────────────────────────────────────────────────── */
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
   const CROP_ASPECT   = 16 / 9;
-  const MAX_OUTPUT_W  = 1920;
+  const MAX_OUTPUT_W  = 1000;
   const JPEG_QUALITY  = 0.8;
   const HANDLE_SIZE   = 12;
   const URL_DEBOUNCE  = 500;

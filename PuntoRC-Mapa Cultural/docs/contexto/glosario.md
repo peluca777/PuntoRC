@@ -21,12 +21,14 @@ Este documento compila el lenguaje ubicuo del proyecto para alinear las denomina
 
 * **Navbar Superior**: Barra fija o superior con el logotipo de PuntoRC, barra de búsqueda en tiempo real, selector de modo oscuro/claro, contador de favoritos y botones de autenticación / acceso admin.
 * **Hero Slider (Carrusel)**: Banner rotativo de gran impacto visual en la cabecera del sitio que promociona los espectáculos más destacados de la semana en Río Cuarto.
-* **Card de Evento (Tarjeta)**: Contenedor individual en la cartelera que reúne la imagen de portada, categoría (badge), título, fecha, hora, espacio cultural, botón de favorito y botón de acción "Ver detalles".
+* **Card de Evento (Tarjeta)**: Contenedor horizontal compacto en la cartelera (~90–110px de altura en móvil) organizado en cuatro zonas: miniatura izquierda (con cinta 'AGOTADO' y botón de edición admin), bloque central de información (título, categoría con ícono violeta, pin de ubicación, precio/pill 'Gratis' y disponibilidad), bloque de fecha a la derecha con borde divisor, y columna lateral de acciones con botón de favorito (bookmark) y chevron accesible.
+* **Bloque de fecha**: Módulo vertical a la derecha de la card con borde divisor izquierdo que resalta el día de la semana (3 letras), el número del día en tipografía Montserrat destacada en violeta, el mes en 3 letras mayúsculas y la hora en desktop. Parseado dinámicamente mediante `splitEventDate()` sin alterar el contrato de datos.
+* **Panel de notificaciones**: Contenedor desplegable bajo la barra de navegación móvil (`#mobile-notif-panel`), activado desde el botón de campana, con estado vacío ilustrado y exclusión mutua frente al buscador desplegable.
 * **Botón Flotante de Mapa (Floating Action Button - FAB)**: Botón circular con ícono de mapa ubicado en la esquina inferior derecha de la pantalla (`fixed bottom-6 right-6 z-40`), con acento naranja y visible en todo momento.
 * **Overlay del Mapa a Pantalla Completa**: Capa modal que ocupa el 100% del viewport (`z-50`) con fondo opaco, que contiene el lienzo del mapa interactivo, el selector de fecha y el botón de cierre.
 * **Switch de Tema**: Alternador visual con íconos de sol y luna para alternar fluidamente entre los estilos claro y oscuro.
 * **Modal de Autenticación**: Ventana emergente para iniciar sesión o registrarse, con selector rápido de credenciales para prueba (Admin / Visitante).
-* **Editor de Recorte (Crop Editor)**: Modal con `<canvas>` nativo que permite al administrador seleccionar y recortar una región 16:9 de la imagen del evento, con guías de tercios, drag para mover, handles para redimensionar y compresión automática a JPEG 1920x1080/0.8 antes de guardar. Introducido en ADR-009, resolución actualizada en ADR-011.
+* **Editor de Recorte (Crop Editor)**: Modal con `<canvas>` nativo que permite al administrador seleccionar y recortar una región 16:9 de la imagen del evento, con guías de tercios, drag para mover, handles para redimensionar y compresión automática a JPEG 1000px/0.8 antes de guardar. Introducido en ADR-009.
 * **Toggle de Modo de Imagen**: Selector de tabs (Pegar URL / Subir Archivo) en el formulario CRUD que alterna entre ingresar una URL externa o subir un archivo de imagen desde el dispositivo mediante `FileReader`.
 
 ---

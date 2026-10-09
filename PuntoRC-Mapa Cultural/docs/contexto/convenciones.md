@@ -89,19 +89,7 @@ Se implementa una estética de **Modo Oscuro dominante y sofisticado** con sopor
   - `styles.css`: Hojas de estilo y personalizaciones visuales desacopladas.
   - `js/`: Directorio modular organizado por dominios aplicando el **Patrón Repository**:
     - `js/data.js`: Semillas de datos (`DEFAULT_EVENTS`), constantes y configuraciones iniciales.
-    - `js/repository.js`: Abstracción de persistencia local (`localStorage`) para eventos, favoritos y sincronizaciones de Google Calendar (`CalendarRepository`).
-    - `js/calendar.js`: Servicio cliente de Google Identity Services (OAuth 2.0) y Google Calendar API v3.
+    - `js/repository.js`: Abstracción de persistencia local (`localStorage`) para eventos y favoritos.
     - `js/admin.js`: Controladores del modo administrador, modal CRUD y validación de formularios.
-    - `js/image-editor.js`: Editor y optimizador nativo Canvas para compresión y recorte de imágenes 16:9.
     - `js/app.js`: Orquestador de la UI, ciclo de vida, carrusel hero dinámico, filtros y modales.
-
----
-
-## 7. Convenciones de Integración: Google Calendar & OAuth 2.0
-* **Autenticación Frontend**: Exclusivamente mediante Google Identity Services (GIS) Token Model (`google.accounts.oauth2.initTokenClient`), sin enviar credenciales secretas al cliente.
-* **Huso Horario Estándar**: Toda fecha enviada a la API de Calendar debe formatearse en RFC3339 con offset `-03:00` y timezone `America/Argentina/Cordoba`.
-* **Resiliencia de Sincronización**:
-  - Si una petición devuelve código HTTP `401` (Unauthorized), la sesión local debe revocarse y limpiarse inmediatamente, solicitando al usuario reautenticarse mediante un Toast no intrusivo.
-  - Al ejecutar `DELETE` en Google Calendar, respuestas `404` o `410` se tratan como éxito idempotente, removiendo el `googleEventId` de `localStorage`.
-
 

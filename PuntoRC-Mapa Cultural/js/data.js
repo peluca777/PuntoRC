@@ -11,8 +11,6 @@
   ns.STORAGE_FAV_KEY = 'puntorc_favorites';
   ns.STORAGE_ADMIN_KEY = 'puntorc_admin_mode';
   ns.STORAGE_THEME_KEY = 'puntorc_theme';
-  ns.STORAGE_CALENDAR_KEY = 'puntorc_google_calendar_events';
-  ns.STORAGE_SESSION_KEY = 'puntorc_google_session';
 
   ns.DEFAULT_EVENTS = [
     {

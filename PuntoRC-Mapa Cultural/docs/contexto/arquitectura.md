@@ -19,21 +19,25 @@ El proyecto se construye bajo un enfoque 100% frontend nativo, pedagógico y mod
 
 ```
 +-----------------------------------------------------------------------------------------+
-|                                BARRA DE NAVEGACIÓN SUPERIOR (Desktop)                   |
-| [Logo PuntoRC]  [Buscador]  [Switch Sol/Luna]  [Ver en Mapa]  [Favoritos]  [Mi Perfil]   |
+|                                BARRA DE NAVEGACIÓN SUPERIOR                             |
+| Desktop: [Logo PuntoRC]  [Buscador]  [Switch Sol/Luna]  [Ver en Mapa] [Favoritos] [Perfil] |
+| Móvil:   [Logo PuntoRC]  --------------------------------  [Tema] [Campana] [Lupa]      |
+|          [#mobile-search-panel (desplegable)] | [#mobile-notif-panel (desplegable)]     |
 +-----------------------------------------------------------------------------------------+
 |                       BANNER FLOTANTE ADMIN (visible si isAdminMode = true)             |
 | [Status Activo]  "Modo Administrador Activo"  [+ Nuevo Evento]  [Salir del modo admin]  |
 +-----------------------------------------------------------------------------------------+
-|                               HERO / SLIDER ROTATIVO                                    |
-|               Carrusel de banners destacando los eventos top de Río Cuarto              |
+|                               HERO / SLIDER ROTATIVO COMPACTO                           |
+|       Carrusel de altura reducida (h-190/280/380px) destacando eventos top de Río IV    |
 +-----------------------------------------------------------------------------------------+
-|                               CARTELERA CULTURAL (GRID)                                 |
+|                     CARTELERA CULTURAL — CARDS HORIZONTALES (1 col móv / 2 col desk)    |
 |   Filtros de categoría (Música, Teatro, Feria, Cine, Taller, Jazz)                      |
-|   [Card Evento 1]       [Card Evento 2]       [Card Evento 3]       [Card Evento 4]     |
-|   - Foto ilustrativa    - Categoría           - Título              - Fecha y Hora      |
-|   - Espacio Cultural    - Ícono Favorito      - Badge Disponibilidad - Botón "Detalles" |
-|   - Botón "✏️ Editar" (visible en Modo Administrador)                                   |
+|   [Card Horizontal 1]                     [Card Horizontal 2]                           |
+|   - Miniatura + SoldOut/Admin             - Miniatura + SoldOut/Admin                   |
+|   - Info (Título, Cat, Ubic, Precio)      - Info (Título, Cat, Ubic, Precio)            |
+|   - Bloque fecha vertical con divisor     - Bloque fecha vertical con divisor           |
+|   - Acciones: Bookmark + Chevron          - Acciones: Bookmark + Chevron                |
+|   [Mensaje "No hay más eventos" en móvil]                                               |
 +-----------------------------------------------------------------------------------------+
 |                                MODAL DETALLES DEL EVENTO (SPA)                          |
 |   Vista emergente con foto ampliada, metadatos, cupos y acción "Conseguir Entradas"     |
@@ -47,12 +51,12 @@ El proyecto se construye bajo un enfoque 100% frontend nativo, pedagógico y mod
 |   - Formulario para crear o editar títulos, fechas, precios, categorías, cupos y fotos  |
 |   - Botón "Eliminar evento" con confirmación y feedback por Toast                       |
 +-----------------------------------------------------------------------------------------+
-|                                 PIE DE PÁGINA (FOOTER)                                  |
+|                     PIE DE PÁGINA (FOOTER — Sólo Desktop, hidden md:block)              |
 |   - Enlaces a redes sociales y créditos alineados con max-w-7xl                         |
-|   - Formulario interactivo "Sugerir un evento" con feedback inmediato                   |
+|   - Formulario interactivo "Sugerir un evento" (en móvil se reubicará en Perfil)        |
 +-----------------------------------------------------------------------------------------+
 |                  BOTTOM NAVIGATION BAR (Móvil únicamente: fixed bottom-0)               |
-|      [ Inicio ]        [ Explorar ]        [ 📍 Mapa (Pill Central) ]       [ Perfil ]   |
+|      [ Inicio ]        [ Explorar (Lupa) ]        [ 📍 Mapa (Central) ]     [ Perfil ]  |
 +-----------------------------------------------------------------------------------------+
 ```
 
@@ -71,8 +75,6 @@ No se utiliza backend ni API remota. Toda la información reside en `localStorag
 3. **`puntorc_theme`**: Estado persistido del tema visual (`dark` o `light`).
 4. **`puntorc_admin_mode`**: Estado del Modo Administrador ('true' o 'false').
 5. **`puntorc_suggestions`**: Registro de sugerencias enviadas por la comunidad.
-6. **`puntorc_google_calendar_events`**: Mapeo asociativo entre identificadores de eventos de PuntoRC y los `googleEventId` generados por la API de Google Calendar (`{ [eventId]: googleEventId }`).
-7. **`puntorc_google_session`**: Almacenamiento local del token de acceso (`access_token`), tiempo de expiración y perfil público del usuario obtenido vía Google Identity Services (GIS).
 
 ---
 
@@ -89,9 +91,8 @@ Para garantizar simplicidad conceptual, facilidad de depuración y foco pedagóg
 Conforme al estándar SDD y ADR-008, el código se divide en capas de responsabilidad única:
 1. **Capa de Presentación Markup (`index.html`)**: Esqueleto estructural semántico accesible. Libre de lógica o scripts en línea.
 2. **Capa de Estilos (`styles.css`)**: Reglas globales para scrollbars invisibles y transiciones.
-3. **Capa de Datos de Dominio (`js/data.js`)**: Semillas iniciales (`DEFAULT_EVENTS` con `isFeatured`), constantes, claves de almacenamiento e iconografía SVG.
-4. **Capa de Persistencia y Repositorio (`js/repository.js`)**: Implementación del **Patrón Repository** (`EventRepository`, `FavoritesRepository`, `CalendarRepository`) que encapsula y desacopla la persistencia en `localStorage`.
-5. **Capa de Integración de Servicios Externos (`js/calendar.js`)**: Servicio cliente para autenticación OAuth 2.0 (Google Identity Services) y sincronización bidireccional con Google Calendar API v3 (`POST` y `DELETE`), con parser tolerante de fechas a RFC3339.
-6. **Capa de Administración (`js/admin.js`)**: Gestión del modo administrador, interruptor estilo iOS y formulario modal CRUD con soporte para eventos destacados.
-7. **Capa de Orquestación UI (`js/app.js`)**: Ciclo de vida, tema bimodal, Hero dinámico, auto-ocultamiento de flechas en móvil, favoritos, sincronización con Google Calendar y modales SPA.
+3. **Capa de Datos de Dominio (`js/data.js`)**: Semillas iniciales (`DEFAULT_EVENTS` con `isFeatured`), constantes y mapeos de iconos SVG.
+4. **Capa de Persistencia y Repositorio (`js/repository.js`)**: Implementación del **Patrón Repository** (`EventRepository`, `FavoritesRepository`) que encapsula y desacopla la persistencia en `localStorage`.
+5. **Capa de Administración (`js/admin.js`)**: Gestión del modo administrador, interruptor estilo iOS y formulario modal CRUD con soporte para eventos destacados.
+6. **Capa de Orquestación UI (`js/app.js`)**: Ciclo de vida, tema bimodal, Hero compacto dinámico, auto-ocultamiento de flechas en móvil, favoritos con bookmark, renderizado de cards horizontales compactas con bloque de fecha (`splitEventDate`), paneles móviles de búsqueda y notificaciones con exclusión mutua, y modales SPA.
 

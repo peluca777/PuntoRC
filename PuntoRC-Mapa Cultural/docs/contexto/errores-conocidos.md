@@ -75,23 +75,3 @@ Este documento es una guía defensiva para prevenir los errores más comunes al 
 * **Causa**: Olvidar definir pares de clases en Tailwind (ej: poner sólo `text-slate-800` sin su variante `dark:text-slate-100`).
 * **Solución Técnica**:
   - Verificar siempre las parejas de utilidades: `bg-white dark:bg-slate-900`, `text-slate-900 dark:text-white`, `border-slate-200 dark:border-slate-800`.
-
----
-
-### 🐛 Gotcha 7: Desbordamiento Horizontal en Botoneras con 3 o Más Acciones
-* **Síntoma**: Al agregar un botón extra a una botonera existente, el último botón queda cortado o invisible por desbordamiento horizontal, especialmente en viewports móviles.
-* **Causa**: Contenedores `flex-row` sin `flex-wrap` que no permiten el salto de línea cuando el ancho total de los hijos supera al contenedor padre.
-* **Contexto del incidente**: Al añadir el botón "Añadir a Google Calendar" al modal de detalle de evento (4 botones en `flex-col sm:flex-row gap-3` sin `flex-wrap`), el botón "Compartir" quedó recortado en viewports estrechos.
-* **Solución Técnica**:
-  - Para botoneras con 3 o más acciones, usar **siempre** `flex-wrap` con un `gap` adecuado:
-    ```html
-    <div class="flex flex-wrap gap-2">
-      <button class="flex-1 min-w-[160px] ...">Acción principal</button>
-      <button class="shrink-0 ...">Acción secundaria</button>
-      <button class="shrink-0 ...">Acción terciaria</button>
-    </div>
-    ```
-  - El botón principal puede llevar `flex-1 min-w-[Xpx]` para crecer hasta ocupar el ancho disponible pero nunca bajar de un mínimo legible.
-  - Los botones secundarios deben llevar `shrink-0` para no comprimirse.
-  - Como alternativa, considerar `grid grid-cols-2 gap-2` para layouts de 4 botones parejos.
-

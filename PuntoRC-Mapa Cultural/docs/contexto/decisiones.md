@@ -111,7 +111,7 @@ Este documento es el registro inmutable de decisiones técnicas y arquitectónic
 
 ## ADR-009: Edición Local de Imágenes vía Canvas Nativo con Compresión Obligatoria
 * **Fecha y Hora**: 2026-09-22 09:30:00 -03:00
-* **Estado**: Aceptado (Aprobado explícitamente por el usuario). Modificado por ADR-011 (aumento de resolución máxima a 1920x1080)
+* **Estado**: Aceptado (Aprobado explícitamente por el usuario)
 * **Contexto**: El campo de imagen del formulario CRUD solo aceptaba URLs externas (Unsplash, etc.). Se requiere permitir la subida de archivos de imagen locales desde el dispositivo del administrador y ofrecer un editor de recorte visual para ambas fuentes, sin agregar librerías externas ni modificar el contrato de datos (`repository.js`).
 * **Decisión**:
   1. **Toggle URL/Archivo**: Selector de tabs accesible (role="tab") en el formulario CRUD que alterna entre pegar una URL externa o subir un archivo local (`FileReader → dataURL`).
@@ -124,29 +124,45 @@ Este documento es el registro inmutable de decisiones técnicas y arquitectónic
   - **Integrar todo en `admin.js`**: Descartada por violar ADR-008 (prohibición de monolitos y SRP).
 * **Consecuencias**: Las imágenes en base64 comprimidas pesan ~80-150 KB cada una. Con ~10 eventos usando imagen local, el consumo estimado es ~1.5-2 MB de los ~5 MB disponibles en `localStorage`. La compresión obligatoria mantiene este riesgo controlado. El modelo de datos (`Event.image: string`) no cambia; acepta tanto URLs como dataURLs de forma transparente.
 
-## ADR-010: Integración de Google Calendar API v3 con Google Identity Services (OAuth 2.0) y Sincronización Bidireccional
-* **Fecha y Hora**: 2026-09-24 01:55:00 -03:00
-* **Estado**: Aceptado
-* **Contexto**: Se requiere permitir a los usuarios agendar eventos culturales de Río Cuarto directamente en su cuenta personal de Google Calendar y gestionar la eliminación bidireccional desde la app, bajo la restricción estricta de arquitectura 100% frontend (sin backend propio) y persistencia en `localStorage`.
-* **Decisión**:
-  1. **SDK Oficial Google Identity Services (GIS)**: Inyección asíncrona de `https://accounts.google.com/gsi/client` en `<head>` para gestionar el flujo OAuth 2.0 client-side (Implicit / Token Model) mediante `google.accounts.oauth2.initTokenClient` con el Client ID oficial `17830521576-k28ndr4fjurid8p4fhq5ldah5fafro4o.apps.googleusercontent.com` y scopes `https://www.googleapis.com/auth/calendar.events`, `email` y `profile`.
-  2. **Persistencia Desacoplada (`CalendarRepository`)**: Extensión del Patrón Repository en `js/repository.js` con las claves aisladas `puntorc_google_session` (token de acceso, vigencia y datos de perfil) y `puntorc_google_calendar_events` (mapeo `{ [eventId]: googleEventId }`).
-  3. **Módulo de Integración Dedicado (`js/calendar.js`)**: Encapsulación de las peticiones REST a `https://www.googleapis.com/calendar/v3/calendars/primary/events` (POST para inserción y DELETE para desvinculación), junto con un parser inteligente de fechas culturales de Río Cuarto a marcas RFC3339 en zona horaria `America/Argentina/Cordoba` (`-03:00`).
-  4. **Toggle Dinámico en Tarjeta Modal del Evento**: Botón con feedback interactivo ("Añadir a Google Calendar" vs "Agendado (Quitar)"), estados de carga (`isCalendarSyncing`) y gestión de errores/expiración con notificaciones Toast.
-  5. **Sección Dedicada en "Mi Perfil"**: Grilla de "Eventos Agendados en Google Calendar" independiente de favoritos, renderizada dinámicamente cruzando el catálogo de eventos con los identificadores sincronizados, con acciones inmediatas para "Ver" y "Quitar de Calendar".
-* **Alternativas Evaluadas**:
-  - **Uso de enlaces `calendar.google.com/render?action=TEMPLATE`**: Descartada porque no permite sincronización bidireccional ni eliminación programática (DELETE).
-  - **Acoplar llamadas fetch directamente en `app.js`**: Descartada por violar ADR-008 (Single Responsibility Principle) y el Definition of Done global.
-* **Consecuencias**: El usuario experimenta una integración moderna y sin fricción con su calendario nativo. Si la sesión expira o es revocada por Google (código HTTP 401), la app se recupera limpiando la sesión local y guiando al usuario con Toast contextual.
+---
+
+## ADR-012: Rediseño del Menú Móvil (Cards Horizontales, Hero Compacto, Campana UI-Only y Footer Desktop)
+* **Fecha y Hora**: 2026-09-28 22:15:00 -03:00
+* **Estado**: Aceptado (Aprobado explícitamente por el usuario)
+* **Contexto**: Optimización de la experiencia móvil (menú y cartelera) para reducir la altura del contenido vertical, evitar scroll excesivo y adoptar un lenguaje visual moderno más cercano a aplicaciones de eventos.
+* **Decisiones (con fundamentación POR QUÉ)**:
+  1. **Hero Slider más bajo (`h-[190px] sm:h-[280px] lg:h-[380px]`)**: Porque la altura anterior ocupaba casi todo el viewport del celular impidiendo ver que la cartelera continuaba debajo.
+  2. **Cards de Evento Horizontales Compactas (~90–110px)**: Porque permiten ver múltiples eventos a la vez sin scroll excesivo, aumentando la densidad de información útil.
+  3. **Bloque de Fecha a la derecha**: Porque desacopla el impacto temporal del título, facilitando el escaneo visual rápido de cuándo ocurren las actividades.
+  4. **Fecha parseada del texto libre (`splitEventDate`) sin alterar el modelo**: Porque permite renderizar el bloque de fecha sin migraciones destructivas ni roturas del contrato de datos existente en `repository.js`.
+  5. **Bookmark superior y Chevron inferior**: Porque reemplaza botones 3D grandes que saturaban la tarjeta compacta, reservando el chevron como punto de acceso por teclado y el bookmark para guardado ágil.
+  6. **Campana UI-only en Header móvil**: Porque anticipa el espacio para futuras notificaciones sin sobrecargar la interfaz actual con lógica prematura ni backend.
+  7. **Lupa unificada con Tab Explorar (`toggleMobileSearch`)**: Porque consolida en una sola función accesible el despliegue del buscador, evitando duplicación y sincronizando el estado con la barra inferior.
+  8. **Footer exclusivo para Desktop (`hidden md:block`)**: Porque en pantallas táctiles la Bottom Nav ya cubre la navegación fija y el pie de página extenso entorpecía el cierre de la cartelera.
+  9. **Mensaje "No hay más eventos" en móvil**: Porque proporciona retroalimentación clara de fin de listado al usuario móvil antes de alcanzar el margen de la Bottom Nav.
+* **Pendientes Anotados**:
+  - Implementación de notificaciones reales (requiere backend/push o eventos programados).
+  - Reubicación del formulario "Sugerir evento" en el modal de Perfil (actualmente oculto en móvil).
+  - Actualización del copy "corazón" en el modal de Perfil hacia "guardar/bookmark".
+  - Refinamiento de vistas de evento y mapa interactivo (Fase 2).
 
 ---
 
-## ADR-011: Aumento de Resolución Máxima de Imágenes Subidas/Recortadas (1000px → 1920x1080)
-* **Fecha y Hora**: 2026-09-26 10:23:00 -03:00
+## ADR-013: Pulido del Menú (Hero Limpio, Cards con Miniatura Ampliada, Filtros y Fechas Sticky, y Restauración de Google Calendar)
+* **Fecha y Hora**: 2026-09-28 23:30:00 -03:00
 * **Estado**: Aceptado (Aprobado explícitamente por el usuario)
-* **Contexto**: ADR-009 fijó `MAX_OUTPUT_W` en 1000px como medida de mitigación del riesgo de saturar la cuota de `localStorage` (~5 MB), estimando un peso de ~80-150 KB por imagen comprimida y una capacidad efectiva de ~10 eventos con imagen local. El usuario decidió priorizar mayor calidad visual a resolución Full HD (1920×1080), aceptando explícitamente el trade-off de menor cantidad de eventos con imagen propia almacenables simultáneamente.
-* **Decisión**: Elevar `MAX_OUTPUT_W` de `1000` a `1920` en `js/image-editor.js` (sección CONSTANTES). Las constantes `CROP_ASPECT = 16 / 9` y `JPEG_QUALITY = 0.8` se mantienen sin cambios. Con el aspecto fijo 16:9, el alto resultante queda automáticamente en **1080px**; las funciones `compressImageSource()` y `applyCrop()` ya calculan las dimensiones de forma proporcional a partir de `MAX_OUTPUT_W`, por lo que no requieren modificación.
-* **Alternativas Evaluadas**:
-  - **Mantener 1000px**: Descartada por decisión explícita del usuario que prioriza calidad visual Full HD.
-  - **Valor intermedio (1280px → 720p)**: Descartada; el usuario indicó específicamente 1920px como resolución objetivo.
-* **Consecuencias**: Cada imagen comprimida ahora pesa aproximadamente 300-600 KB (antes ~80-150 KB), reduciendo la capacidad efectiva de eventos con imagen local almacenables en `localStorage` de ~10 eventos a aproximadamente 4-6 eventos antes de alcanzar la cuota de ~5 MB. Se recomienda al usuario monitorear el uso de `localStorage` si se suben muchas imágenes locales. El contrato de datos (`Event.image: string`) no cambia.
+* **Contexto**: Refinamiento estético y funcional del menú principal y la cartelera para limpiar el hero visualmente, agrandar las miniaturas de las cards, asegurar el orden cronológico real con encabezados de fecha sticky y restaurar la integración con Google Calendar en el modal de detalle.
+* **Decisiones (con fundamentación POR QUÉ)**:
+  1. **Hero sin degradados ni textos superpuestos**: Porque el arte fotográfico de los eventos debe apreciarse limpio y nítido, delegando la información a dos pills flotantes superiores (categoría a la izquierda y fecha/descuento a la derecha).
+  2. **Proporción de Hero aspect-video en móvil y aspect-[21/9] (máx 440px) centrado en desktop**: Porque adapta el banner a estándares panorámicos cinematográficos sin cortar fotos ni forzar alturas fijas.
+  3. **Dots de navegación externos bajo el carrusel con indicador expandido (`w-6`)**: Porque evita pisar las imágenes y mejora el contraste visual sobre el fondo general (claro/oscuro).
+  4. **Corrección de clics en slides inactivos (`inert` y `pointer-events-none`)**: Porque los slides con `opacity-0` interceptaban eventos de teclado y mouse interfiriendo con el slide visible.
+  5. **Miniatura de cards ampliada a altura completa (`min-h-[104px]`, `w-24 sm:w-40`) con card `p-2`**: Porque genera un radio concéntrico armónico con `rounded-2xl` y resalta la identidad visual de cada espectáculo garantizando ancho de lectura en 360px.
+  6. **Filtros de categoría sticky (`top-16 z-30`) y banner admin relativo**: Porque mantiene las opciones de filtrado accesibles durante el scroll sin tapar contenido ni solaparse con el panel de administración.
+  7. **Ordenamiento cronológico real (`getEventSortKey`) y grupos de fecha sticky (`top-[7.5rem] z-20`)**: Porque calcula marcas de tiempo reales a partir de los textos de fecha permitiendo organizar la cartelera por días con encabezados fijos secuenciales en modos de fecha y lista plana en modo alfabético.
+  8. **Restauración del botón "Añadir a Google Calendar" en el modal de detalle**: Porque permite a los usuarios agendar o quitar actividades culturales en su cuenta de Google mediante OAuth 2.0 y Google Identity Services sin fricción.
+* **Pendientes Anotados**:
+  - Incorporación del campo opcional `discount` en el formulario modal CRUD (`admin.js`).
+  - Evaluar la continuidad del bloque de fecha interno en cada card considerando la presencia de los nuevos encabezados de grupo sticky.
+
+
